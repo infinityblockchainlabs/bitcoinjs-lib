@@ -1,11 +1,12 @@
 var bip66 = require('bip66')
 var typeforce = require('typeforce')
 var types = require('./types')
+var setting = require('./setting')
 
 var BigInteger = require('bigi')
 
 function ECSignature (r, s) {
-  typeforce(types.tuple(types.BigInt, types.BigInt), arguments)
+  // typeforce(types.tuple(types.BigInt, types.BigInt), arguments)
 
   this.r = r
   this.s = s
@@ -47,7 +48,13 @@ ECSignature.fromDER = function (buffer) {
 // BIP62: 1 byte hashType flag (only 0x01, 0x02, 0x03, 0x81, 0x82 and 0x83 are allowed)
 ECSignature.parseScriptSignature = function (buffer) {
   var hashType = buffer.readUInt8(buffer.length - 1)
-  var hashTypeMod = hashType & ~0x80
+  
+  var hashTypeMod
+  if (setting.isBCH()) {
+    hashTypeMod = hashType & ~0xc0
+  } else {
+    hashTypeMod = hashType & ~0x80
+  }
 
   if (hashTypeMod <= 0x00 || hashTypeMod >= 0x04) throw new Error('Invalid hashType ' + hashType)
 
@@ -85,7 +92,13 @@ ECSignature.prototype.toRSBuffer = function (buffer, offset) {
 }
 
 ECSignature.prototype.toScriptSignature = function (hashType) {
-  var hashTypeMod = hashType & ~0x80
+  var hashTypeMod
+  if (setting.isBCH()) {
+    hashTypeMod = hashType & ~0xc0
+  } else {
+    hashTypeMod = hashType & ~0x80
+  }
+
   if (hashTypeMod <= 0 || hashTypeMod >= 4) throw new Error('Invalid hashType ' + hashType)
 
   var hashTypeBuffer = Buffer.alloc(1)

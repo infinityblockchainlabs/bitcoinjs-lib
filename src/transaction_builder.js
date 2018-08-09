@@ -7,6 +7,7 @@ var networks = require('./networks')
 var ops = require('bitcoin-ops')
 var typeforce = require('typeforce')
 var types = require('./types')
+var setting = require('./setting')
 var scriptTypes = btemplates.types
 var SIGNABLE = [btemplates.types.P2PKH, btemplates.types.P2PK, btemplates.types.MULTISIG]
 var P2SH = SIGNABLE.concat([btemplates.types.P2WPKH, btemplates.types.P2WSH])
@@ -695,10 +696,14 @@ TransactionBuilder.prototype.sign = function (vin, keyPair, redeemScript, hashTy
 
   // ready to sign
   var signatureHash
-  if (input.witness) {
-    signatureHash = this.tx.hashForWitnessV0(vin, input.signScript, input.value, hashType)
+  if (setting.isBCH()) {
+    signatureHash = this.tx.hashForCashSignature(vin, input.signScript, witnessValue, hashType) 
   } else {
-    signatureHash = this.tx.hashForSignature(vin, input.signScript, hashType)
+    if (input.witness) {
+      signatureHash = this.tx.hashForWitnessV0(vin, input.signScript, input.value, hashType)
+    } else {
+      signatureHash = this.tx.hashForSignature(vin, input.signScript, hashType)
+    }
   }
 
   // enforce in order signing of public keys

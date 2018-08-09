@@ -4,6 +4,7 @@ var pushdata = require('pushdata-bitcoin')
 var typeforce = require('typeforce')
 var types = require('./types')
 var scriptNumber = require('./script_number')
+var setting = require('./setting')
 
 var OPS = require('bitcoin-ops')
 var REVERSE_OPS = require('bitcoin-ops/map')
@@ -185,7 +186,12 @@ function isCanonicalPubKey (buffer) {
 }
 
 function isDefinedHashType (hashType) {
-  var hashTypeMod = hashType & ~0x80
+  var hashTypeMod
+  if (setting.isBCH()) {
+    hashTypeMod = hashType & ~0xc0
+  } else {
+    hashTypeMod = hashType & ~0x80
+  }
 
 // return hashTypeMod > SIGHASH_ALL && hashTypeMod < SIGHASH_SINGLE
   return hashTypeMod > 0x00 && hashTypeMod < 0x04
